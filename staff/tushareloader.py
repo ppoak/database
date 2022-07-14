@@ -1,6 +1,5 @@
-import pandas as pd
-import pandasquant as pq
-from data.core import Loader
+import quool as ql
+from ..core import Loader
 
 class TuShareLoader(Loader):
     
@@ -10,7 +9,7 @@ class TuShareLoader(Loader):
         self.args = config.get('args', {})
 
     def write(self):
-        for arg in pq.Track(list(self.args)):
+        for arg in ql.Track(list(self.args)):
             data = None
             while data is None:
                 try:
