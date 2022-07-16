@@ -1,9 +1,14 @@
+import sqlalchemy
+
+
 class Loader:
 
     def __init__(self, config) -> None:
         self.table = config['table']
         self.database = config['database']
         self.addindex = config.get('addindex', None)
+        if isinstance(self.database, str):
+            self.database = sqlalchemy.engine.create_engine(self.database)
     
     def post(self):
         if self.addindex is not None:

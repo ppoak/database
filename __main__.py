@@ -16,6 +16,17 @@ local_market_daily_config = dict(
     },
 )
 
+local_plate_info_config = dict(
+    loader = LocalLoader,
+    path = ql.Cache().get('local_plate_info_path'),
+    table = "plate_info",
+    database = sqlalchemy.engine.create_engine(ql.Cache().get('local')),
+    addindex = {
+        "idx_plate_info_date": "date",
+        "idx_plate_info_order_book_id": "order_book_id",
+    },
+)
+
 local_index_market_daily_config = dict(
     loader = LocalLoader,
     path = ql.Cache().get('local_index_market_daily_path'),
@@ -38,6 +49,28 @@ local_derivative_indicator_config = dict(
     },
 )
 
+local_instruments_config = dict(
+    loader = LocalLoader,
+    path = ql.Cache().get('local_instruments_path'),
+    table = "instruments",
+    database = ql.Cache().get('local'),
+    addindex = {
+        "idx_instruments_order_book_id": "order_book_id",
+    },
+)
+
+local_index_weights_config = dict(
+    loader = LocalLoader,
+    path = ql.Cache().get('local_index_weights_path'),
+    table = "index_weights",
+    database = ql.Cache().get('local'),
+    addindex = {
+        "idx_index_weights_date": "date",
+        "idx_index_weights_index_id": "index_id",
+        "idx_index_weights_order_book_id": "order_book_id",
+    },
+)
+
 tushare_market_daily_config = dict(
     loader = TuShareLoader,
     table = 'market_daily',
@@ -54,6 +87,9 @@ configs = dict(
     local_market_daily_config = local_market_daily_config,
     local_index_market_daily_config = local_index_market_daily_config,
     local_derivative_indicator_config = local_derivative_indicator_config,
+    local_index_weights_config = local_index_weights_config,
+    local_instruments_config = local_instruments_config,
+    local_plate_info_config = local_plate_info_config,
     tushare_market_daily_config = tushare_market_daily_config,
 )
 
