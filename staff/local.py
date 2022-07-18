@@ -2,7 +2,7 @@ import pandas as pd
 from ..core import Loader
 
 
-class LocalLoader(Loader):
+class Local(Loader):
     
     def __init__(self, config) -> None:
         super().__init__(config)

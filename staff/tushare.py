@@ -1,7 +1,7 @@
 import quool as ql
 from ..core import Loader
 
-class TuShareLoader(Loader):
+class TuShare(Loader):
     
     def __init__(self, config) -> None:
         super().__init__(config)

@@ -6,7 +6,7 @@ from .staff import *
 
 
 local_market_daily_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_market_daily_path'),
     table = "market_daily",
     database = sqlalchemy.engine.create_engine(ql.Cache().get('local')),
@@ -17,7 +17,7 @@ local_market_daily_config = dict(
 )
 
 local_plate_info_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_plate_info_path'),
     table = "plate_info",
     database = sqlalchemy.engine.create_engine(ql.Cache().get('local')),
@@ -28,7 +28,7 @@ local_plate_info_config = dict(
 )
 
 local_index_market_daily_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_index_market_daily_path'),
     table = "index_market_daily",
     database = sqlalchemy.engine.create_engine(ql.Cache().get('local')),
@@ -39,7 +39,7 @@ local_index_market_daily_config = dict(
 )
 
 local_derivative_indicator_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_derivative_indicator_path'),
     table = "derivative_indicator",
     database = ql.Cache().get('local'),
@@ -50,7 +50,7 @@ local_derivative_indicator_config = dict(
 )
 
 local_instruments_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_instruments_path'),
     table = "instruments",
     database = ql.Cache().get('local'),
@@ -60,7 +60,7 @@ local_instruments_config = dict(
 )
 
 local_index_weights_config = dict(
-    loader = LocalLoader,
+    loader = Local,
     path = ql.Cache().get('local_index_weights_path'),
     table = "index_weights",
     database = ql.Cache().get('local'),
@@ -72,14 +72,14 @@ local_index_weights_config = dict(
 )
 
 tushare_market_daily_config = dict(
-    loader = TuShareLoader,
+    loader = TuShare,
     table = 'market_daily',
     database = sqlalchemy.engine.create_engine(ql.Cache().get('tushare')),
     addindex = {
         "idx_derivative_indicator_trade_date": "trade_date",
         "idx_derivative_indicator_ts_code": "ts_code",
     },
-    func = ql.TuShare(ql.Cache().get('token')).market_daily,
+    func = TuShare(ql.Cache().get('token')).market_daily,
     args = zip(*[pd.date_range('20121122', '20220706', freq=ql.CBD)] * 2),
 )
 
