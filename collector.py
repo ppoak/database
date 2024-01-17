@@ -26,7 +26,7 @@ class KaiXin(Request):
         n_jobs: int = 1, 
         backend: str = 'threading'
     ):
-        url = [self.__url_base.format(i) for i in range(1, page_count + 1)]
+        url = [self.__url_base.format(i=i) for i in range(1, page_count + 1)]
         return super().request(url, 'get', n_jobs, backend)
 
     def callback(self):
@@ -62,8 +62,8 @@ class KuaiDaili(Request):
         url = []
         for page_index in range(1, page_count + 1):
             for pattern in [self.__inha_base, self.__intr_base]:
-                url.append(pattern.format(page_index))
-        super().request(url, 'get', n_jobs, backend)
+                url.append(pattern.format(page_index=page_index))
+        return super().request(url, 'get', n_jobs, backend)
 
     def callback(self):
         results = []
@@ -96,8 +96,8 @@ class Ip3366(Request):
         url = []
         for page in range(1, page_count + 1):
             for pattern in [self.__type1_base, self.__type2_base]:
-                url.append(pattern.format(page))
-        super().request(url, 'get', n_jobs, backend)
+                url.append(pattern.format(page=page))
+        return super().request(url, 'get', n_jobs, backend)
 
     def callback(self):
         results = []
@@ -125,8 +125,8 @@ class Ip98(Request):
     ):
         url = []
         for page in range(1, page_count + 1):
-            url.append(self.__base_url.format(page))
-        super().request(url, 'get', n_jobs, backend)
+            url.append(self.__base_url.format(page=page))
+        return super().request(url, 'get', n_jobs, backend)
     
     def callback(self):
         results = []

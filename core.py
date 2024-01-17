@@ -223,27 +223,32 @@ def _save_data(filename: str | Path, table_base: str):
     table.update(df)
     filename.unlink()
 
-def update_proxy(proxy_table_path: str):
+def update_proxy(proxy_table_path: str, logger: Logger):
     table = FrameTable(proxy_table_path)
     proxy = table.read()
     logger.info(f'fetching kaixin proxy source')
-    kx = collector.KaiXin().request_callback(n_jobs=-1)
+    kx = collector.KaiXin().request(n_jobs=-1).callback()
     logger.info(f'fetching kuaidaili proxy source')
-    kdl = collector.KuaiDaili().request_callback(n_jobs=1)
+    kdl = collector.KuaiDaili().request(n_jobs=-1).callback()
     logger.info(f'fetching ip3366 proxy source')
-    ip3366 = collector.Ip3366().request_callback(n_jobs=-1)
+    ip3366 = collector.Ip3366().request(n_jobs=-1).callback()
     logger.info(f'fetching ip98 proxy source')
-    ip98 = collector.Ip98().request_callback(n_jobs=-1)
+    ip98 = collector.Ip98().request(n_jobs=-1).callback()
     logger.info(f'checking availability or proxies')
     data = pd.concat([proxy, kx, kdl, ip3366, ip98], ignore_index=True)
     
-    records = records.to_dict(orient='records')
+    records = proxy.to_dict(orient='records')
     check_url = "http://httpbin.org/ip"
     valid_index = []
     for i, rec in enumerate(records):
-        res = collector.Request(proxies=[rec]).request(check_url, n_jobs=-1).json
-        if res and (res.get('origin') == rec["http"] or res.get('origin') == rec["https"]):
-            valid_index.append(i)
+        res = collector.Request(proxies=[rec]).request(check_url, n_jobs=-1)
+        if (res.responses[0]):
+            try: 
+                res = res.json()
+                if res.get('origin') == rec["http"] or res.get('origin') == rec["https"]:
+                    valid_index.append(i)
+            except:
+                pass
     data = data.loc[valid_index]
     table.update(data)
 
@@ -273,7 +278,7 @@ if __name__ == "__main__":
     logger.info("-" * 5 + ' updating data ' + "-" * 5)
     update_data(filename, "/home/data")
     logger.info("-" * 5 + ' update proxy ' + "-" * 5)
-    update_proxy('/home/data/proxy')
+    update_proxy('/home/data/proxy', logger)
     logger.info("-" * 5 + ' finished update ' + "-" * 5)
     for uri in Path('/home/data').iterdir():
         backup_data(uri, backup)
