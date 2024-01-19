@@ -1,11 +1,10 @@
 import quool
 import tarfile
 import argparse
-import collector
+import database
 import pandas as pd
 from pathlib import Path
 from functools import partial
-from quool.table import PanelTable, FrameTable
 
 
 CODE_LEVEL = "order_book_id"
@@ -14,52 +13,52 @@ DATE_LEVEL = "date"
 
 TABLE_DICT = {
     "index-weights": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
     "industry-info": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
-    "instruments-info": partial(FrameTable),
+    "instruments-info": partial(quool.FrameTable),
     "quotes-day": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
     "quotes-min": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level="datetime", 
         code_level=CODE_LEVEL
     ),
     "security-margin": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level="date", 
         code_level=CODE_LEVEL
     ),
     "stock-connect": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
     "financial": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL, 
         freq='Y', 
         format='%Y'
     ),
     "dividend-split": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL, 
         freq='Y', 
         format='%Y'
     ),
     "index-quotes-day": partial(
-        PanelTable, 
+        quool.PanelTable, 
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
@@ -107,16 +106,16 @@ def _update_data(filename: str | Path, table_base: str, logfile: str = 'debug.lo
 def update_proxy(proxy_table_path: str, logfile: str = 'debug.log'):
     logger = quool.Logger("UpdateProxy", display_name=True, file=logfile)
     logger.info("=" * 5 + " update proxy start " + "=" * 5)
-    table = FrameTable(proxy_table_path)
+    table = quool.FrameTable(proxy_table_path)
     proxy = table.read()
     logger.info(f'fetching kaixin proxy source')
-    kx = collector.KaiXin().request(n_jobs=-1).callback()
+    kx = database.KaiXin().request(n_jobs=-1).callback()
     logger.info(f'fetching kuaidaili proxy source')
-    kdl = collector.KuaiDaili().request(n_jobs=-1).callback()
+    kdl = database.KuaiDaili().request(n_jobs=-1).callback()
     logger.info(f'fetching ip3366 proxy source')
-    ip3366 = collector.Ip3366().request(n_jobs=-1).callback()
+    ip3366 = database.Ip3366().request(n_jobs=-1).callback()
     logger.info(f'fetching ip98 proxy source')
-    ip98 = collector.Ip98().request(n_jobs=-1).callback()
+    ip98 = database.Ip98().request(n_jobs=-1).callback()
     logger.info(f'checking availability or proxies')
     data = pd.concat([proxy, kx, kdl, ip3366, ip98], ignore_index=True)
     
@@ -124,7 +123,7 @@ def update_proxy(proxy_table_path: str, logfile: str = 'debug.log'):
     check_url = "http://httpbin.org/ip"
     valid_index = []
     for i, rec in enumerate(records):
-        res = collector.Request(proxies=[rec]).request(check_url, n_jobs=-1)
+        res = database.Request(proxies=[rec]).request(check_url, n_jobs=-1)
         if (res.responses[0]):
             try: 
                 res = res.json()
@@ -160,7 +159,7 @@ if __name__ == "__main__":
     args = parse_args()
     user, password, driver, target, backup, logfile = (args.user, 
         args.password, args.driver, args.target, args.backup, args.logfile)
-    filename = collector.ricequant_fetcher(user, password, driver, target, logfile)
+    filename = database.ricequant_fetcher(user, password, driver, target, logfile)
     update_data(filename, "/home/data", logfile=logfile)
     update_proxy('/home/data/proxy', logfile=logfile)
     for uri in Path('/home/data').iterdir():
