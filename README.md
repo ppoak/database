@@ -25,4 +25,6 @@ Not finished yet!😅
 
 ## Change Log
 
-version 0.1.0: (current version) support for daily update data from ricequant.
+version 0.1.1: (current version) reorganize the structure, move `fetch_data` to `collector.py`
+
+version 0.1.0: support for daily update data from ricequant.

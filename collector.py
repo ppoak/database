@@ -1,16 +1,142 @@
+import os
 import re
 import time
+import quool
 import random
 import datetime
 import requests
 import numpy as np
 import pandas as pd
 import akshare as ak
-from quool import Logger
-from quool.request import Request
 from tqdm import tqdm
+from pathlib import Path
+from quool.request import Request
 from urllib.parse import quote
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
+
+def ricequant_fetcher(
+    user: str,
+    password: str,
+    driver: str,
+    target: str,
+    logfile: str = 'update.log',
+):
+    logger = quool.Logger("ricequant", display_name=True, file=logfile)
+    logger.info("=" * 5 + " ricequant fetcher start " + "=" * 5)
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    prefs = {"download.default_directory" : target}
+    chrome_options.add_experimental_option("prefs", prefs)
+
+    service = Service(driver)
+    driver: webdriver.Chrome = webdriver.Chrome(service=service, options=chrome_options)
+
+    logger.info("visiting https://www.ricequant.com/")
+    driver.get("https://www.ricequant.com/")
+
+    time.sleep(5)
+    login_button = driver.find_element(By.CLASS_NAME, "user-status")
+    login_button.click()
+    logger.info("loging in")
+    password_login = driver.find_element(By.CSS_SELECTOR, '.el-dialog__body > div > div > ul > li:nth-child(2)')
+    password_login.click()
+    inputs = driver.find_elements(By.CLASS_NAME, 'el-input__inner')
+    for ipt in inputs:
+        if '邮箱' in ipt.get_attribute('placeholder'):
+            account = ipt
+        if '密码' in ipt.get_attribute('placeholder'):
+            passwd = ipt
+    account.send_keys(user)
+    passwd.send_keys(password)
+    login_button = driver.find_element(By.CSS_SELECTOR, 'button.el-button.common-button.btn--submit')
+    login_button.click()
+    logger.info("logged in and redirect to reserch subdomain")
+
+    time.sleep(5)
+    driver.get('https://www.ricequant.com/research/')
+    time.sleep(5)
+    notebook_list = driver.find_element(By.ID, 'notebook_list')
+    logger.info("finding `ricequant_fetcher.ipynb`")
+    items = notebook_list.find_elements(By.CSS_SELECTOR, '.list_item.row')
+    for item in items:
+        if 'ricequant_fetcher' in item.text:
+            file = item.find_element(By.CSS_SELECTOR, 'a')
+            break
+    file.click()
+
+    logger.info("wait for some time before redirect to `ricequant_fetcher.ipynb`")
+    driver.switch_to.window(driver.window_handles[-1])
+    time.sleep(5)
+    cell = driver.find_element(By.CSS_SELECTOR, '#menus > div > div > ul > li:nth-child(5)')
+    cell.click()
+    runall = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, '#run_all_cells'))
+    )
+    logger.info("start running")
+    runall.click()
+    unfinished = 0
+    while True:
+        prompts = driver.find_elements(By.CSS_SELECTOR, '.prompt.input_prompt')
+        unfinished_cur = 0
+        for prompt in prompts:
+            if '*' in prompt.text:
+                unfinished_cur += 1
+        if unfinished_cur != unfinished:
+            logger.info(f'tasks left: {unfinished_cur}/{len(prompts)}')
+            unfinished = unfinished_cur
+        if unfinished == 0:
+            break
+    logger.info("all tasks are finished")
+    driver.close()
+    driver.switch_to.window(driver.window_handles[-1])
+    driver.refresh()
+    time.sleep(5)
+    notebook_list = driver.find_element(By.ID, 'notebook_list')
+    items = notebook_list.find_elements(By.CSS_SELECTOR, '.list_item.row')
+    todaystr = datetime.datetime.today().strftime(r'%Y%m%d')
+    logger.info("finding the generated data file")
+    for item in items:
+        if todaystr in item.text and '.tar.gz' in item.text:
+            file = item
+            break
+    file.click()
+    filename = file.text.splitlines()[0]
+    filepath_parent = Path(target)
+    download_button = driver.find_element(By.CSS_SELECTOR, '.download-button.btn.btn-default.btn-xs')
+    download_button.click()
+    logger.info(f"downloading {filename}")
+    previous_size = -1
+    time.sleep(1)
+    while True:
+        filepath = list(filepath_parent.glob(f'{filename}*'))[0]
+        current_size = os.path.getsize(filepath)
+        if current_size == previous_size:
+            logger.info(f"{filepath} is finished downloading")
+            break
+        else:
+            previous_size = current_size
+            time.sleep(2)
+    logger.info(f"deleting {filename}")
+    time.sleep(5)
+    delete_button = driver.find_element(By.CSS_SELECTOR, '.delete-button.btn.btn-default.btn-xs.btn-danger')
+    delete_button.click()
+    time.sleep(5)
+    double_check_delete_button = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, '.btn.btn-default.btn-sm.btn-danger'))
+    )
+    double_check_delete_button.click()
+    
+    driver.quit()
+    logger.info("=" * 5 + " ricequant fetcher stop " + "=" * 5)
+    return filepath
 
 
 class KaiXin(Request):
@@ -150,7 +276,7 @@ class WeiboSearch:
     '''
 
     __base = "https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D1%26q%3D{}&page_type=searchall&page={}"
-    Logger = Logger("QuoolWeiboSearch")
+    Logger = quool.Logger("QuoolWeiboSearch")
 
     @classmethod
     def _get_content(cls, url, headers):
@@ -294,7 +420,7 @@ class AkShare:
     """
     TODAY = pd.to_datetime(datetime.datetime.today()).normalize()
     START = '20050101'
-    logger = Logger("QuoolAkShare")
+    logger = quool.Logger("QuoolAkShare")
     
     @classmethod
     def market_daily(cls, code: str, start: str = None, end: str = None):
