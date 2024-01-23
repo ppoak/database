@@ -77,7 +77,7 @@ def parse_args():
     return args
 
 def update_data(filename: str, table_base: str, logfile: str = 'debug.log'):
-    logger = quool.Logger("UpdateData", display_name=True, file=logfile)
+    logger = quool.Logger("UpdateData", stream=False, display_name=True, file=logfile)
     logger.info("=" * 5 + " update data start " + "=" * 5)
     data_path = Path(filename).expanduser().resolve()
     directory = data_path.parent / data_path.stem
@@ -104,7 +104,7 @@ def _update_data(filename: str | Path, table_base: str, logfile: str = 'debug.lo
     filename.unlink()
 
 def update_proxy(proxy_table_path: str, logfile: str = 'debug.log'):
-    logger = quool.Logger("UpdateProxy", display_name=True, file=logfile)
+    logger = quool.Logger("UpdateProxy", stream=False, display_name=True, file=logfile)
     logger.info("=" * 5 + " update proxy start " + "=" * 5)
     table = quool.FrameTable(proxy_table_path)
     proxy = table.read()
@@ -136,7 +136,7 @@ def update_proxy(proxy_table_path: str, logfile: str = 'debug.log'):
     logger.info("=" * 5 + " update proxy stop " + "=" * 5)
 
 def backup_data(uri: str | Path, backup: str | Path, logfile: str = "debug.log"):
-    logger = quool.Logger("UpdateProxy", display_name=True, file=logfile)
+    logger = quool.Logger("UpdateProxy", stream=False, display_name=True, file=logfile)
     logger.info("=" * 5 + " backup data start " + "=" * 5)
     uri = Path(uri).expanduser().resolve()
     backup = Path(backup).expanduser().resolve()
