@@ -29,8 +29,8 @@ def ricequant_fetcher(
     target: str,
     logfile: str = 'update.log',
 ):
-    logger = quool.Logger("ricequant", display_name=True, file=logfile)
-    logger.info("=" * 5 + " ricequant fetcher start " + "=" * 5)
+    logger = quool.Logger("ricequant", stream=False, display_name=True, file=logfile)
+    logger.debug("=" * 5 + " ricequant fetcher start " + "=" * 5)
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -41,13 +41,13 @@ def ricequant_fetcher(
     service = Service(driver)
     driver: webdriver.Chrome = webdriver.Chrome(service=service, options=chrome_options)
 
-    logger.info("visiting https://www.ricequant.com/")
+    logger.debug("visiting https://www.ricequant.com/")
     driver.get("https://www.ricequant.com/")
 
     time.sleep(5)
     login_button = driver.find_element(By.CLASS_NAME, "user-status")
     login_button.click()
-    logger.info("loging in")
+    logger.debug("loging in")
     password_login = driver.find_element(By.CSS_SELECTOR, '.el-dialog__body > div > div > ul > li:nth-child(2)')
     password_login.click()
     inputs = driver.find_elements(By.CLASS_NAME, 'el-input__inner')
@@ -60,13 +60,13 @@ def ricequant_fetcher(
     passwd.send_keys(password)
     login_button = driver.find_element(By.CSS_SELECTOR, 'button.el-button.common-button.btn--submit')
     login_button.click()
-    logger.info("logged in and redirect to reserch subdomain")
+    logger.debug("logged in and redirect to reserch subdomain")
 
     time.sleep(5)
     driver.get('https://www.ricequant.com/research/')
     time.sleep(5)
     notebook_list = driver.find_element(By.ID, 'notebook_list')
-    logger.info("finding `ricequant_fetcher.ipynb`")
+    logger.debug("finding `ricequant_fetcher.ipynb`")
     items = notebook_list.find_elements(By.CSS_SELECTOR, '.list_item.row')
     for item in items:
         if 'ricequant_fetcher' in item.text:
@@ -74,7 +74,7 @@ def ricequant_fetcher(
             break
     file.click()
 
-    logger.info("wait for some time before redirect to `ricequant_fetcher.ipynb`")
+    logger.debug("wait for some time before redirect to `ricequant_fetcher.ipynb`")
     driver.switch_to.window(driver.window_handles[-1])
     time.sleep(5)
     cell = driver.find_element(By.CSS_SELECTOR, '#menus > div > div > ul > li:nth-child(5)')
@@ -82,7 +82,7 @@ def ricequant_fetcher(
     runall = WebDriverWait(driver, 20).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, '#run_all_cells'))
     )
-    logger.info("start running")
+    logger.debug("start running")
     runall.click()
     unfinished = 0
     while True:
@@ -92,11 +92,11 @@ def ricequant_fetcher(
             if '*' in prompt.text:
                 unfinished_cur += 1
         if unfinished_cur != unfinished:
-            logger.info(f'tasks left: {unfinished_cur}/{len(prompts)}')
+            logger.debug(f'tasks left: {unfinished_cur}/{len(prompts)}')
             unfinished = unfinished_cur
         if unfinished == 0:
             break
-    logger.info("all tasks are finished")
+    logger.debug("all tasks are finished")
     driver.close()
     driver.switch_to.window(driver.window_handles[-1])
     driver.refresh()
@@ -104,7 +104,7 @@ def ricequant_fetcher(
     notebook_list = driver.find_element(By.ID, 'notebook_list')
     items = notebook_list.find_elements(By.CSS_SELECTOR, '.list_item.row')
     todaystr = datetime.datetime.today().strftime(r'%Y%m%d')
-    logger.info("finding the generated data file")
+    logger.debug("finding the generated data file")
     for item in items:
         if todaystr in item.text and '.tar.gz' in item.text:
             file = item
@@ -114,19 +114,19 @@ def ricequant_fetcher(
     filepath_parent = Path(target)
     download_button = driver.find_element(By.CSS_SELECTOR, '.download-button.btn.btn-default.btn-xs')
     download_button.click()
-    logger.info(f"downloading {filename}")
+    logger.debug(f"downloading {filename}")
     previous_size = -1
     time.sleep(1)
     while True:
         filepath = list(filepath_parent.glob(f'{filename}*'))[0]
         current_size = os.path.getsize(filepath)
         if current_size == previous_size:
-            logger.info(f"{filepath} is finished downloading")
+            logger.debug(f"{filepath} is finished downloading")
             break
         else:
             previous_size = current_size
             time.sleep(2)
-    logger.info(f"deleting {filename}")
+    logger.debug(f"deleting {filename}")
     time.sleep(5)
     delete_button = driver.find_element(By.CSS_SELECTOR, '.delete-button.btn.btn-default.btn-xs.btn-danger')
     delete_button.click()
@@ -137,7 +137,7 @@ def ricequant_fetcher(
     double_check_delete_button.click()
     
     driver.quit()
-    logger.info("=" * 5 + " ricequant fetcher stop " + "=" * 5)
+    logger.debug("=" * 5 + " ricequant fetcher stop " + "=" * 5)
     return filepath
 
 
