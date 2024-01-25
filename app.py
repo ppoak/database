@@ -9,6 +9,8 @@ from functools import partial
 
 CODE_LEVEL = "order_book_id"
 DATE_LEVEL = "date"
+DATABASE_ROOT = "/home/data/"
+PROXYURI = "/home/data/proxy"
 
 
 TABLE_DICT = {
@@ -162,9 +164,7 @@ if __name__ == "__main__":
     user, password, driver, target, backup, logfile = (args.user, 
         args.password, args.driver, args.target, args.backup, args.logfile)
     filename = database.ricequant_fetcher(user, password, driver, target, logfile)
-    logfile = "debug.log"
-    filename = "/Users/oak/Desktop/database/data_20240123-20240124.tar"
-    update_data(filename, "/Users/oak/Repo/Data", logfile=logfile)
-    update_proxy('/Users/oak/Repo/Data/proxy', logfile=logfile)
-    for uri in Path('/Users/oak/Repo/Data').iterdir():
+    update_data(filename, DATABASE_ROOT, logfile=logfile)
+    update_proxy(PROXYURI, logfile=logfile)
+    for uri in Path(DATABASE_ROOT).iterdir():
         backup_data(uri, backup)
