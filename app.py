@@ -86,6 +86,8 @@ def update_data(filename: str, table_base: str, logfile: str = 'debug.log'):
         with tarfile.open(data_path, f'r:{data_path.suffix[1:]}') as tar:
             tar.extractall(path=directory)
         data_path.unlink()
+    else:
+        directory = data_path
 
     logger.info('-' * 20)
     for file in directory.glob('**/*.parquet'):
@@ -160,7 +162,9 @@ if __name__ == "__main__":
     user, password, driver, target, backup, logfile = (args.user, 
         args.password, args.driver, args.target, args.backup, args.logfile)
     filename = database.ricequant_fetcher(user, password, driver, target, logfile)
-    update_data(filename, "/home/data", logfile=logfile)
-    update_proxy('/home/data/proxy', logfile=logfile)
-    for uri in Path('/home/data').iterdir():
+    logfile = "debug.log"
+    filename = "/Users/oak/Desktop/database/data_20240123-20240124.tar"
+    update_data(filename, "/Users/oak/Repo/Data", logfile=logfile)
+    update_proxy('/Users/oak/Repo/Data/proxy', logfile=logfile)
+    for uri in Path('/Users/oak/Repo/Data').iterdir():
         backup_data(uri, backup)
