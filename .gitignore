@@ -169,3 +169,4 @@ cython_debug/
 meal.py
 config
 test*
+.vscode
