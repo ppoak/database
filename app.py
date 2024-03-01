@@ -1,5 +1,6 @@
 import quool
 import tarfile
+import requests
 import argparse
 import database
 import pandas as pd
@@ -123,19 +124,25 @@ def update_proxy(proxy_table_path: str, logfile: str = 'debug.log'):
     logger.debug(f'checking availability or proxies')
     data = pd.concat([proxy, kx, kdl, ip3366, ip98], ignore_index=True)
     
-    records = proxy.to_dict(orient='records')
-    check_url = "http://httpbin.org/ip"
+    records = proxy["http"].to_dict(orient='records')
+    check_url = "http://stock.gtimg.cn/data/index.php"
+    params = {
+        "appn": "detail",
+        "action": "data",
+        "c": 'sh600000',
+        "p": '1',
+    }
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1788.0  uacq'}
     valid_index = []
     for i, rec in enumerate(records):
-        res = database.Request(proxies=[rec]).request(check_url, n_jobs=-1)
-        if (res.responses[0]):
-            try: 
-                res = res.json()
-                if res.get('origin') == rec["http"] or res.get('origin') == rec["https"]:
-                    valid_index.append(i)
-            except:
-                pass
-    data = data.loc[valid_index]
+        try:
+            r = requests.get(check_url, headers=headers, params=params, proxies=rec, verify=False)
+            text_data = r.text
+            pd.DataFrame(eval(text_data[text_data.find("[") :])[1].split("|")).iloc[:, 0].str.split("/", expand=True)
+            valid_index.append(i)
+        except:
+            continue
+    data = data.iloc[valid_index].reset_index(drop=True)
     table.update(data)
     logger.debug("=" * 5 + " update proxy stop " + "=" * 5)
 
