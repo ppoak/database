@@ -65,6 +65,11 @@ TABLE_DICT = {
         date_level=DATE_LEVEL, 
         code_level=CODE_LEVEL
     ),
+    "index-quotes-min": partial(
+        quool.PanelTable, 
+        date_level="datetime", 
+        code_level=CODE_LEVEL
+    ),
 }
 
 
